@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ReWorth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI;
+    background:#0b0f1a;
+    color:white;
+}
+
+/* NAVBAR */
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    padding:15px 30px;
+    border-bottom:2px solid #222;
+    align-items:center;
+}
+
+.logo{
+    font-family:'Montserrat';
+    font-size:36px;
+    letter-spacing:3px;
+}
+
+/* SEARCH */
+.search input{
+    padding:10px;
+    width:350px;
+    border-radius:8px;
+    border:none;
+}
+
+/* RIGHT */
+.right{
+    display:flex;
+    gap:25px;
+}
+
+/* SORT */
+.sort{
+    cursor:pointer;
+    position:relative;
+}
+
+.sort-options{
+    display:none;
+    position:absolute;
+    top:30px;
+    right:0;
+    background:#111827;
+    border-radius:8px;
+    padding:10px;
+}
+
+.sort-options div{
+    padding:6px;
+    cursor:pointer;
+}
+
+.sort-options div:hover{
+    background:#333;
+}
+
+/* GRID */
+.products{
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#111827;
+    padding:10px;
+    border-radius:12px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.card:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 15px #00ffd5;
+}
+
+.card img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+/* MODAL */
+.modal{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.9);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+    background:#111827;
+    padding:20px;
+    border-radius:15px;
+    width:420px;
+    text-align:center;
+}
+
+.modal img{width:100%;}
+
+button{
+    padding:10px 20px;
+    margin:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.buy{background:#00ffd5;}
+.cart{background:orange;}
+
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">REWORTH</div>
+
+    <div class="search">
+        <input id="search" placeholder="Search products..." onkeyup="searchProducts()">
+    </div>
+
+    <div class="right">
+        <div class="sort" onclick="toggleSort()">Sort ▾
+            <div class="sort-options" id="sortBox">
+                <div onclick="applySort('all')">All</div>
+                <div onclick="applySort('A')">Grade A</div>
+                <div onclick="applySort('B')">Grade B</div>
+                <div onclick="applySort('C')">Grade C</div>
+            </div>
+        </div>
+        <div>🛒 <span id="cart">0</span></div>
+    </div>
+</div>
+
+<div class="products" id="products"></div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<img id="img">
+<h2 id="title"></h2>
+<p id="desc"></p>
+<p id="price"></p>
+<p id="grade"></p>
+
+<button onclick="downloadPDF()">📄 Certificate</button>
+<button class="cart" onclick="addCart()">Add to Cart</button>
+<button class="buy">Buy Now</button>
+</div>
+</div>
+
+<script>
+
+/* 🔥 RELEVANT IMAGE MAP */
+const imageMap = {
+    Shoes: [
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+        "https://images.unsplash.com/photo-1600180758890-6c9caa3f1b3c",
+        "https://images.unsplash.com/photo-1528701800489-20be3c9b3f86"
+    ],
+    Dress: [
+        "https://images.unsplash.com/photo-1520975916090-3105956dac38",
+        "https://images.unsplash.com/photo-1495121605193-b116b5b09e71",
+        "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c"
+    ],
+    Mobile: [
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
+        "https://images.unsplash.com/photo-1510557880182-3f8bcb8f8c57",
+        "https://images.unsplash.com/photo-1580910051074-3eb694886505"
+    ],
+    Furniture: [
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511",
+        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+        "https://images.unsplash.com/photo-1582582494700-0d79c8cba0f7"
+    ],
+    Bottle: [
+        "https://images.unsplash.com/photo-1526401485004-2fda9f4b3f5c",
+        "https://images.unsplash.com/photo-1573164574397-df0f0b1c72a3",
+        "https://images.unsplash.com/photo-1602143407151-7111542de6e8"
+    ],
+    Cap: [
+        "https://images.unsplash.com/photo-1520975661595-6453be3f7070",
+        "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519",
+        "https://images.unsplash.com/photo-1523381210434-271e8be1f52b"
+    ],
+    Bedsheet: [
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7",
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
+        "https://images.unsplash.com/photo-1582582494700-0d79c8cba0f7"
+    ],
+    Cooler: [
+        "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
+        "https://images.unsplash.com/photo-1598300056393-4aac492f4344",
+        "https://images.unsplash.com/photo-1621263764928-df1444c5e859"
+    ]
+};
+
+let products=[];
+let grades=["A","B","C"];
+let categories=Object.keys(imageMap);
+
+/* CREATE PRODUCTS */
+for(let i=0;i<60;i++){
+    let cat=categories[i%categories.length];
+    let imgSet=imageMap[cat];
+
+    products.push({
+        name:cat+" Pro-"+(200+i),
+        id:"RW"+(1000+i),
+        price:1200+i*200,
+        original:2000+i*300,
+        grade:grades[i%3],
+        defect:["Minor scratch","Box damage","Tiny dent"][i%3],
+        desc:"Premium unused product with minor cosmetic defect but fully functional, quality tested and verified for reliable everyday usage at a significantly reduced price.",
+        img:imgSet[i % imgSet.length]
+    });
+}
+
+let currentList=products;
+let current;
+
+/* DISPLAY */
+function show(list){
+    let html="";
+    list.forEach((p,i)=>{
+        html+=`
+        <div class="card" onclick="openModal(${i})">
+            <img src="${p.img}" onerror="this.src='https://picsum.photos/400'">
+            <h4>${p.name}</h4>
+            <div>${p.id}</div>
+            <div>₹${p.price}</div>
+        </div>`;
+    });
+    document.getElementById("products").innerHTML=html;
+}
+show(products);
+
+/* SEARCH */
+function searchProducts(){
+    let val=document.getElementById("search").value.toLowerCase();
+    currentList=products.filter(p=>p.name.toLowerCase().includes(val));
+    if(currentList.length===0) currentList=products;
+    show(currentList);
+}
+
+/* SORT */
+function toggleSort(){
+    let box=document.getElementById("sortBox");
+    box.style.display=box.style.display==="block"?"none":"block";
+}
+
+function applySort(g){
+    if(g==="all") currentList=products;
+    else currentList=products.filter(p=>p.grade===g);
+    show(currentList);
+}
+
+/* MODAL */
+function openModal(i){
+    current=currentList[i];
+
+    document.getElementById("modal").style.display="flex";
+    document.getElementById("img").src=current.img;
+    document.getElementById("title").innerText=current.name+" ("+current.id+")";
+    document.getElementById("desc").innerText=current.desc+" | Defect: "+current.defect;
+    document.getElementById("price").innerText="₹"+current.price+" (Original ₹"+current.original+")";
+    document.getElementById("grade").innerText="AI Grade: "+current.grade;
+}
+
+/* CLOSE */
+window.onclick=e=>{
+    if(e.target.id==="modal"){
+        document.getElementById("modal").style.display="none";
+    }
+}
+
+/* CART */
+let cart=0;
+function addCart(){
+    cart++;
+    document.getElementById("cart").innerText=cart;
+}
+
+/* PDF */
+function downloadPDF(){
+    let p=current;
+
+    let win=window.open("");
+    win.document.write(`
+        <h1 style="color:green;">VERIFIED</h1>
+        <img src="${p.img}" width="300"><br><br>
+        <b>${p.name}</b><br>
+        ID: ${p.id}<br><br>
+        ${p.desc}<br><br>
+        Defect: ${p.defect}<br>
+        Grade: ${p.grade}<br><br>
+        Price: ₹${p.price}<br>
+        Original: ₹${p.original}
+    `);
+
+    win.print();
+}
+
+</script>
+
+</body>
+</html>
